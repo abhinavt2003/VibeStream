@@ -20,5 +20,14 @@ app.use(express.static("public"))   //assets like images,favicons we will keep i
 app.use(cookieParser())
 
 
+//Routes import
+import userRouter from './routes/user.routes.js'
+
+//routes declaration
+// We were using app.get() but we cant use it here, previously it was legit coz we were writing routes and controllers at same place 
+// But now we have shifted router so we have to use middlewares
+app.use("/api/v1/users",userRouter)
+
+//http://localhost:8000/api/v1/users/register
 
 export { app }
