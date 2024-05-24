@@ -3,7 +3,7 @@
 // we use multer to take file from user and temporarily stores it on multer
 // Using cloudinary we take that file from local storage and uploads it on server
 
-import {v2 as cloudinary} from cloudinary   //v2 as koi bhi naam de skte ho
+import {v2 as cloudinary} from "cloudinary"  //v2 as koi bhi naam de skte ho
 import fs from "fs"   //fs is file system
 
 
