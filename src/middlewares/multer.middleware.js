@@ -14,10 +14,10 @@ const storage = multer.diskStorage({
         cb(null, "./public/temp")
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname)   //bad practice, will give many files, overwritten //original file return kr dega
+        cb(null, Date.now() + '-' + file.originalname)   //bad practice, will give many files, overwritten //original file return kr dega
     }
 })
 
 export const upload = multer({
-     storage, 
+    storage: storage, 
 })
