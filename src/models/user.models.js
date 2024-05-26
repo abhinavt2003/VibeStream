@@ -57,7 +57,7 @@ const userSchema= new Schema(
 //Problem is that it will change password on every save operation, in case of other save activities too
 //For that we have to write if condition
 userSchema.pre("save",async function(next){ 
-    if(this.isModified("password")) return next();
+    if(!this.isModified("password")) return next();
     this.password= await bcrypt.hash(this.password,10)   //(kisko hash kru , rounds )
     next()
 }) //whenever you write callback in pre dont write like this ()=>{} coz its problematic coz arrow function dont have this function access means it does not know the context, instead function(){}
