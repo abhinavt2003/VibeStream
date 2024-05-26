@@ -103,6 +103,13 @@ userSchema.methods.generateRefreshToken= function(){
     )
 }
 
+// modern practices is of two tokens - Refresh and Access tokens
+// Why two tokens?
+// Both tokens are merely same creation only difference lies in expiry, access tokens are generally short lived while refresh tokens are long lived
+// where u need authentication,authorisation we can use access tokens , suppose we have session of 15 min after 15 min ur authorisation will be gone, u have to again write all the authorisations 
+// So here comes refresh tokens , it stores authentication in database and gives it to user too
+// Validate through access tokens but once you hit an endpoint if refresh token is same as ur authorisation refresh token then hm log mandavali kr lenge , and provide u with a new access token
+
 
 
 export const User = mongoose.model("User",userSchema)
