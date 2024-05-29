@@ -291,7 +291,7 @@ const changeCurrentPassword= asyncHandler(async(req,res)=>{
 const getCurrentUser= asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(200,req.user,"Current user fetched successfully")
+    .json(new ApiResponse(200,req.user,"Current user fetched successfully"))
 })
 
 const updateAccountDetails= asyncHandler(async(req,res)=>{
@@ -300,7 +300,7 @@ const updateAccountDetails= asyncHandler(async(req,res)=>{
         throw new ApiError(400,"All fields are required")
     }
 
-    const user=User.findByIdAndUpdate(
+    const user=await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -322,6 +322,8 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is missing")
     }
+
+    //TODO: delete old image- assignment
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
@@ -376,4 +378,129 @@ const updateUserCoverImage= asyncHandler(async(req,res)=>{
     )
 })
 
-export {registerUser,loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage }
+const getUserChannelProfile = asyncHandler(async(req,res)=>{
+    const {username}=req.params
+    if(!username?.trim()){
+        throw new ApiError(400,"username is missing")
+    }
+
+    const channel= await User.aggregate([
+    {
+        $match:{            //it macthes the field u are concerned
+            username: username?.toLowerCase()
+        }
+    },
+    {
+        $lookup:{           // lookUp looks the match fields in other components
+            from: "subscriptions",
+            localField: "_id",
+            foreignField: "channel",
+            as: "subscribers"
+        }
+    },
+    {
+        $lookup:{
+            from: "subscriptions",
+            localField: "_id",
+            foreignField: "subscriber",
+            as: "subscribedTo"
+        }
+    },
+    {
+        $addFields:{                // Add the lookups and gives a third field
+            subscriberCount: {
+                $size: "$subscribers"
+            },
+            channelsSubscribedToCount:{
+                $size: "$subscribedTo"
+            },
+            isSubcribed:{
+                $cond: {
+                    if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                    then: true,
+                    else: false
+                }
+            }
+        },
+        
+    },
+    {
+        $project:{                                      //Projection it projects the desired fields whichever fields u want set the flag to one
+            fullname: 1,
+            username: 1,
+            subscriberCount: 1,
+            channelsSubscribedToCount: 1,
+            isSubcribed:1,
+            avatar: 1,
+            coverImage: 1,
+            email: 1
+        }
+    }])
+
+    if(!channel?.length){
+        throw new ApiError(404,"channel does not exist")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], "User channel fetched successfully")
+    )
+})
+
+const getWatchHistory= asyncHandler(async(req,res)=>{
+     //Here we get string as _id, mongoose changes the id to string format
+    const user= await User.aggregate([
+    {
+        $match: {
+            _id: new mongoose.Types.ObjectId(req.user._id)
+        }
+    },
+    {
+        $lookup:{
+            from: "videos",
+            localField: "watchHistory",
+            foreignField: "_id",
+            as: "watchHistory",
+            pipeline: [
+                {
+                    $lookup:{
+                        from: "users",
+                        localField: "owner",
+                        foreignField: "_id",
+                        as: "owner",
+                        pipeline: [
+                            {
+                                $project: {
+                                    fullname: 1,
+                                    username: 1,
+                                    avatar: 1
+                                }
+                            }
+                        ]
+                    }
+                },
+                {       //This pipeline is written coz we want only first data so we will basically take the first data and overwrite it to owner field
+                    $addFields: {   
+                        owner:{
+                            $first: "$owner"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+    ])     
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch History fetched successfully"
+        )
+    )
+})
+
+
+export {registerUser,loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage,getUserChannelProfile,getWatchHistory }
