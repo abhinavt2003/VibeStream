@@ -1,5 +1,5 @@
-# Chai aur Backend series
+# VibeStream 
 
-This is a video series on backend with JavaScript
+It is an Backend Application of an App which is like Youtube and have many features of subscription, users, like, tweet.
 
 - [Model Link](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj?origin=share)
