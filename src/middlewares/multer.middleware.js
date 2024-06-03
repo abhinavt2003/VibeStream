@@ -9,11 +9,11 @@ import multer from "multer";
 
 // We can use disk Storage,memory Storage but we are using our disk storage 
 
-const storage = multer.diskStorage({
+const storage = multer.diskStorage({   // files ko diskStorage me store kro
     destination: function (req, file, cb) {
-        cb(null, "./public/temp")
+        cb(null, "./public/temp")      // I will keep all my files in public/temp
     },
-    filename: function (req, file, cb) {
+    filename: function (req, file, cb) {                  //filename jo bhi rkhna hai
         cb(null, Date.now() + '-' + file.originalname)   //bad practice, will give many files, overwritten //original file return kr dega
     }
 })

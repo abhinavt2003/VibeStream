@@ -10,11 +10,14 @@ app.use(cors({
     credentials: true
 }))    //cors use krne ka syntax
 
-app.use(express.json({limit:"10kb"}))
+// Express can parse incoming request bodies in a middleware before your handlers, available under the req.body property. This is typically done using body-parsing middleware like body-parser or the built-in express.json() and express.urlencoded() methods.
 
-app.use(express.urlencoded({extended: true, limit:"10kb"}))
 
-app.use(express.static("public"))   //assets like images,favicons we will keep it in public folder
+app.use(express.json({limit:"16kb"}))    //json data is coming and limit is set to 10 kb
+
+app.use(express.urlencoded({extended: true, limit:"16kb"}))   //url is coming with limit 10kb   //extended will help you to give objects inside objects
+
+app.use(express.static("public"))   //assets like images, favicons we will keep it in public folder
 
 //cookieParser server k browser se cookies access aur set kr ske, cookies p crud operation krna hai
 app.use(cookieParser())

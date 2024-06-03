@@ -1,1 +1,1 @@
-export const DB_NAME= "videotube"
+export const DB_NAME= "videotube"           //Here I m exporting database name, My database should have a name.

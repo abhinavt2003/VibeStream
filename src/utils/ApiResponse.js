@@ -1,11 +1,22 @@
+// We dont use core Node.js for req,res , we are using express for that so we have to make our own class for response
+
 class ApiResponse{
-    constructor(statusCode,data,message= "Success"){
+    constructor(
+        statusCode,
+        data,
+        message= "Success"
+    )
+    //Now overwrite
+    {
         this.statusCode= statusCode
         this.data=data
         this.message= message
-        this.success= statusCode < 400
+        this.success= statusCode < 400   //Statuscodes should be less than 400
     }
 }
+
+// Every company have different statusCodes
+// Standard Status codes
 
 // server ka statusCode hota hai 
 // statusCode Data range

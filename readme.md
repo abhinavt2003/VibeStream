@@ -62,7 +62,7 @@ server:
 
 Glimpse what we are going to make in Mega Project
 
-# 5
+# 5 - MongoDb, MoonModeler, 
 
 1. Moon Modeler is used for modelling for MongoDb and Mysql, U will draw diagram and it will automatically generate MongoDB schema.
 2. Eraser.io is an alternative for Moon Modeler
@@ -78,7 +78,7 @@ createdBy:{
 	ref: User
 }
 
-# 8
+# 8 - Nodemon, prettier
 
 1. We temporarily stores images, videos on localStorage then push it to clodinary. So that when connection is lost at least we have that in localStorage.
 2. So we create a folder and inside it a folder temp(public/temp) so anything at localStorage will be stored here and then goes to cloudinary. We defines a gitkeep to keep track.
@@ -89,3 +89,107 @@ createdBy:{
 7. Prettier install kr lo, it avoids git conflicts. It is dev dependency. 
 8. Prettier ko install krne k baad prettierrc aur prettierignore khud se add krna hota hai.
 9. prettierignore me .env wgrh daal deta coz whenever prettier enters env file it alters the env
+
+# 9 - Database connection
+
+1. We will be using MongoDB database.
+2. Database connection  -> MongoDB Atlas
+3. Database connection is done mainly by two approaches. First approach is that I put whole code in index file and when index file loads the function code in index file runs. Second way is that I make a db folder and write function of connecting database, import this db folder and run the index file.
+4. Always remember these two things about database.
+Whenever you talks to database problem comes so its better to wrap it in try catch. Or take promises in place of try catch.
+Database is always is in different continent.
+5. In Express.js, .on listeners are used to handle specific events emitted by the application or the underlying Node.js http server.
+6. Node.js access deta hai process ka , process jo hmari current application chl rhi hai uska reference hai, Nodejs me pdhna interesting hai
+7. As early as possible configure the .env variables. So we configure the dotenv in our first files that is main file coz it should be available to all other files.
+8. Whenver a asynchronous method completes it return a promise.
+
+# 10 - CORS,Proxies, CookieParser
+
+1. We configure express files in app.js
+2. after connection start listening to responses thru Express
+3. url se jo data aata hai express me to wo req.params se handle kiya jaata hai
+4. req.body me data text,forms, json kisi me aa skta hai
+5. Sometimes u took data from cookies.
+6. cookie Parser middleware - have to install depenedancies
+7. To include cors install cors
+8. app.use() is used for configurations and middlewares.
+9. app.use(cors(
+	{
+	origin: process.env.CORS_ORIGIN,
+	cridentials: true
+	}
+))
+10. Express can parse incoming request bodies in a middleware before your handlers, available under the req.body property. This is typically done using body-parsing middleware like body-parser or the built-in express.json() and express.urlencoded() methods.
+11. File upload k lie express ready nhi hai isilie usme multer third party api ka use hota hai
+12. CookieParser is used such that I can use cookies from my server to my user browser and do CRUD operations.
+13. We need to talk to database for some type of operations everytime, so we create a utils for that purpose.
+14. Higher order function ka syntax dekh lena.
+15. For this purpose we create an asyncHandler function that is used to talk to database everytime. We dont have to write for everytime we want to talk to database. We create util of asyncHandler for this purpose.
+16. Rather than doing try catch and async await we directly use promises and return the response from database
+17. Promise.resolve(requestHandler(req, res, next)): This ensures that the requestHandler is executed and wrapped in a promise. If the requestHandler is a function that returns a promise (which is typical for async functions), it will be resolved.
+.catch((err) => next(err)): If the promise is rejected (i.e., if the requestHandler throws an error or returns a rejected promise), the error is caught and passed to the next function. This ensures that the error is handled by Express's error-handling middleware.
+18. Node.js gives u a class for error handling. error.stack, error.code
+19. We use that class and extends it and use as utils for ApiError Handling
+20. We dont use core Node.js for req,res , we are using express for that so we have to make our own class for response
+
+# 11 - JWT, bcrypt
+
+1. password:{
+	required: [true,'Password is required']  //You can give custom messages with true field
+}
+2. Mongoose ka aggregate pipeline, ye hmare project ko advance level p le jaega
+3. bcrypt is based on core Node.js library while bcyptJS is optimised with JS library. bcrypt is used to hash our password. 
+4. bcrypt and jwt both are based on cryptographical algorithms
+5. jwt(json web tokens) 
+6. Payload - data
+7. Direct encryption is not possible so we have to take help of mongoose hooks
+8. pre, save hooks
+9. pre hook - Before data is getting saved just before that user call and controllers is configured
+10. Different events are there for hooks i.e. save,validate,remove,updateOne,deleteOne,init
+11. Dont write arrow function in pre hooks because you are taking reference of schema but arrow function dont have the reference of this.
+12. To check whether the encrypted password is correct?.For this mongoose have methods.U can also make custom Methods.
+13. bcrypt can also compare the passwords. Cryptography use ho rhi hai thats why u have to use await.
+14. jwt is a bearer token . Those who bear it we give access to it. 
+15. We define environment variable for this. ACCESS_TOKEN_SECRET,ACCESS_TOKEN_EXPIRY and REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY
+
+# 12 - File Upload - multer, cloudinary
+
+1. File upload is mainly done on backend. In frontend u can only create forms and login button. 
+2. File handling is not done on own server u will use third party services or AWS. Depends on the size.
+3. Either create a middleware or utils for this file upload.
+4. We will use Cloudinary, multer, expressFileUpload.
+5. cloudinary sensitive things will go in .env
+6. We will upload file from user through multer like sdk and upload in local server, using cloudinary we will upload the file on cloudinary.
+7. We are doing two steps because if connection losts then we at least have files on our local storage.
+8. Make a util of cloudinary.
+9. import fs from "fs" 
+file system - nodeJS library - used in File system   //unlink , link 
+10. config these things in .env
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET 
+});
+11. file system is complex like database so we have to use try catch
+12. multer middleware or expressUpload middleware
+13. We use multer because we dont have file access in express(req.body and req.params) thats why we have to use multer to upload files on localStorage, express have access to only req and res not files
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {       // file is actually the middleware  //cb is callback //multer is uploading the file to disk
+        cb(null, "./public/temp")			// I will keep all my files in public/temp
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname)   //bad practice, will give many files, overwritten //original file return kr dega
+    }
+})
+
+# 13 - Router and Controllers
+
+1. Bdi bdi problems ko choti choti problems me break kro.
+2. router is taken from express
+3. import {Router } from "express"
+const router= Router()
+export default router
+4. Will make userRoutes and then import it in App.js.
+5. Since hmne router ko alg kr diya aur ek nya router file bnaya hai hm app.get() nhi kr skte. Hme app.use() ka middleware bnana pdega
+6. Since we are going to have many versions of API so we defines routes as /api/v1/users/register.
+7. app.use("/api/v1/users",userRouter)  /users pr jayenge aur wha se userRouter p pass ho jayenge routes me, wha /register hit hoga to register kr denge user

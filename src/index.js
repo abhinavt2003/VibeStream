@@ -1,5 +1,6 @@
 // require('dotenv').config({path:'./env'})
 import dotenv from "dotenv"
+
 import connectDB from "./db/index.js";
 import {app} from './app.js'
 
@@ -14,9 +15,9 @@ dotenv.config({
 
 // const app = new express();
 
-connectDB()
+connectDB()         // connectDB is an asynchronous method so it return a promise
 .then(()=>{
-    app.listen(process.env.PORT || 8000,() =>{
+    app.listen(process.env.PORT || 8000,() =>{  //after connection start listening to responses thru Express
         console.log(`Server is running at port : ${process.env.PORT}`);
     })
     app.on("error",()=>{
@@ -31,15 +32,17 @@ connectDB()
 
 /*  //First approach
 
-// import express from "express"
-// import connectDB from "./db";
+import express from "express"
+import connectDB from "./db";
+import mongoose from "mongoose";
 
-//IIFE function (iske andr async await)() async await isilie lgate hai kyonki database hmara hmesa dusre continent me hota hai
-//Lane me time lgta hai that's why we use async/await function
+IIFE function ()()
+IIFE function (iske andr async await)() async await isilie lgate hai kyonki database hmara hmesa dusre continent me hota hai
+Lane me time lgta hai that's why we use async/await function
 
 const app= express()
 
-;(async () => {                        //Start me ; isilie lgate hai kyunki agr koi bhula hua error hoga ; ka wo thik ho jaega
+;(async () => {                        //Start me ; isilie lgate hai kyunki agr koi bhula hua error hoga ; ka wo thik ho jaega, for cleaning purposes
     try{
         await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
         app.on("error",()=>{

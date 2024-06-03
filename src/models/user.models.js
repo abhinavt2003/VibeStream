@@ -57,7 +57,7 @@ const userSchema= new Schema(
 //Problem is that it will change password on every save operation, in case of other save activities too
 //For that we have to write if condition
 userSchema.pre("save",async function(next){ 
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return next();   // dont change my password eveytime if it is modified then only change
     this.password= await bcrypt.hash(this.password,10)   //(kisko hash kru , rounds )
     next()
 }) //whenever you write callback in pre dont write like this ()=>{} coz its problematic coz arrow function dont have this function access means it does not know the context, instead function(){}
@@ -66,27 +66,30 @@ userSchema.pre("save",async function(next){
 //For this mongoose have methods
 //U can also make custom Methods
 userSchema.methods.isPasswordCorrect= async function(password){  //Custom method
-    return await bcrypt.compare(password,this.password)
+    return await bcrypt.compare(password,this.password)  //bcrypt can also compare the passwords.
 }
 
 
 //jwt is a bearer token
 //Bearer token is like who bears it I will send data to him
 //Both are jwt tokens only differs in uses- Access and refresh tokens
+
+//access tokens
 userSchema.methods.generateAccessToken = function(){
     return jwt.sign( //Payload
         {
-            _id: this._id,
+            _id: this._id,   //from mongoDB
             email: this.email,
             username: this.username,
             fullname: this.fullname,
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY    //expiry
         }
     )
 }
+
 //refresh token
 userSchema.methods.generateRefreshToken= function(){
         return jwt.sign( //Payload

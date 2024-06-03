@@ -1,10 +1,11 @@
-class ApiError extends Error{
-    constructor(
+class ApiError extends Error{      // I am using Error class from Node.js Error handling options provided by Node.js . Read documentation
+    constructor( 
         statusCode,
         message= "Something went wrong",
         errors= [],
         stack= ""
     ){
+        //Now overwrite constructors
         super(message)
         this.statusCode= statusCode
         this.data= null
@@ -12,7 +13,7 @@ class ApiError extends Error{
         this.success= false
         this.errors= errors
 
-        if(stack){
+        if(stack){   //Stack ko trace krte hai production me 
             this.stack= stack
         }
         else{
