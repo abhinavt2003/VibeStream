@@ -21,7 +21,6 @@ const generateAccessAndRefreshTokens= async(userId) =>{
         //access token we will give to user but we need to save refresh tokens to database
         user.refreshToken= refreshToken
         await user.save({validateBeforeSave: false})      //mongoose will kick in too many methods for save thats why we need to tell validateBeforeSave as false
-
         return {accessToken , refreshToken}
     }catch(error){
         throw new ApiError(500,"Something went wrong while generating access and refresh tokens")
@@ -47,7 +46,8 @@ const registerUser= asyncHandler( async (req,res) =>{
     
     //2.Validation
     if(
-        [fullname,email,username,password].some((field)=> field?.trim()==="")       //some accepts two or three arguments return the value when it is true or until the end of the array
+        [fullname,email,username,password].some((field)=> field?.trim()==="")       
+        //some accepts two or three arguments return the value when it is true or until the end of the array
         
         // The array [fullname, email, username, password] contains four fields that you likely want to validate.
         // The .some() method iterates over this array, applying the arrow function (field) => field?.trim() == "" to each element.
@@ -57,15 +57,16 @@ const registerUser= asyncHandler( async (req,res) =>{
         // The result of trim() is compared to an empty string ("").
         // If any field in the array, after trimming, is an empty string, the condition field?.trim() == "" will be true for that field.
         // The .some() method will then return true if at least one field satisfies the condition. Otherwise, it will return false.
-    ){
+    )     //if block completes here if it returns true then execute the inside statement
+    {
         throw new ApiError(400,"All fields are required")
     }
 
 
     //3.check if user already exists
-    const existedUser=await User.findOne({
-        $or: [{ username },{ email }]          //operators is getting introduced here, we can invoke them using $
-    })
+    const existedUser=await User.findOne({          //Since User is created by mongoose it can directly contact with database
+        $or: [{ username },{ email }]          //operators is getting introduced here, we can invoke them using $  //If I want to check both email and usename then use operators
+    })   // this functions is telling that find me one user of the given username and email firstly found result will be returned
     
     if(existedUser){
         throw new ApiError(409,"User with email and username already exists")  //Direct create a object from ApiError and pass attributes to it thats why we created this ApiError in utils to minimise our task
@@ -99,7 +100,7 @@ const registerUser= asyncHandler( async (req,res) =>{
     }
 
     //6.create user object - create db in user
-    const user= await User.create({
+    const user= await User.create({   // User is created by mongoose means it can directly talk to db so it will create an entry in db by create method
         fullname,
         avatar: avatar.url,         //I want that only url of the object should be saved in db instead of whole object data
         coverImage: coverImage?.url || "",
@@ -126,15 +127,14 @@ const registerUser= asyncHandler( async (req,res) =>{
 
 })
 
-
-
 const loginUser = asyncHandler(async (req,res) =>{
     // 1.req body-> data
     // 2.username or email
     // 3.find the user
     // 4.password check
     // 5.access and refresh token
-    // 6.send them in cookies
+    // 6.send them(access and refresh tokens) in cookies
+    // 7.send response
     
     // 1.req body se data lena hai
     const {email,username,password}=req.body
@@ -194,19 +194,19 @@ const loginUser = asyncHandler(async (req,res) =>{
 })
 
 const logoutUser = asyncHandler(async(req,res) => {
-    //I have to logout some user, for that I have t get the user info that I have to logout
-    //But previuosly I was getting it through req.body and some fields but here we dont know which email to logout
+    //I have to logout some user, for that I have to get the user info that I have to logout.
+    //But previously I was getting it through req.body and some fields but here we dont know which email to logout.
     //thats why we have to use middlewares
     // 1.find the user
     await User.findByIdAndUpdate(
-        req.user._id,
+        req.user._id,               //We verified jwt tokens and added a new field of req.user 
         {
             $unset : {
-                refreshToken: 1 //this removes the field from the document
+                refreshToken: 1 //this removes the field from the document, I dont want refreshtokens coz user is logout. 
             }
         },
         {
-            new : true
+            new : true      //We will get a new value in response
         }
     )
 
@@ -233,9 +233,9 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
         const decodedToken = jwt.verify(
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
-        )
+        )           // We need to verify accessTokens coz user gets the encrypted tokens but we want raw accessToken to compare
     
-        const user = await User.findById(decodedToken?._id)
+        const user = await User.findById(decodedToken?._id)     //To extract refreshToken from Database
         if(!user){
             throw new ApiError(401,"Invalid refresh token")
         }
@@ -262,7 +262,7 @@ const refreshAccessToken= asyncHandler(async(req,res)=>{
         .json(
             new ApiResponse(
                 200,
-                {accessToken,refreshToken,newRefreshToken},
+                {accessToken,refreshToken: newRefreshToken},  // send new refreshTokens, reset refreshToken
                 "Access token refreshed"
             )
         )
@@ -280,8 +280,8 @@ const changeCurrentPassword= asyncHandler(async(req,res)=>{
         throw(400,"Invalid old password")
     }
 
-    user.password=newPassword
-    await user.save({validateBeforeSave: false})
+    user.password=newPassword          // set new password
+    await user.save({validateBeforeSave: false})     //saving the user, before saving pre middleware will run validating the password and required fields but I dont want pre to check all fields so I will use {validateBeforeSave: false}
 
     return res
     .status(200)
@@ -291,7 +291,7 @@ const changeCurrentPassword= asyncHandler(async(req,res)=>{
 const getCurrentUser= asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(new ApiResponse(200,req.user,"Current user fetched successfully"))
+    .json(new ApiResponse(200,req.user,"Current user fetched successfully"))   // User is logged in middleware had been run on user so we have access of req.user
 })
 
 const updateAccountDetails= asyncHandler(async(req,res)=>{

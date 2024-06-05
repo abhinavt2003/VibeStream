@@ -20,7 +20,7 @@ const router = Router()
 
 router.route("/register").post(
     upload.fields([    //Read only multer fields    //upload comes from middleware
-        {
+        {                           // I m uploading avatar and coverImage in localStorage thru multer for registerUser controller
             name: "avatar",
             maxCount: 1,
         },
@@ -37,7 +37,7 @@ router.route("/login").post(loginUser)
 
 //secured routes
 router
-.route("/logout").post(verifyJWT, logoutUser)
+.route("/logout").post(verifyJWT, logoutUser)    // verifyJWT is a middleware
 
 router
 .route("/refresh-token")

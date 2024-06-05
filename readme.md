@@ -192,4 +192,99 @@ export default router
 4. Will make userRoutes and then import it in App.js.
 5. Since hmne router ko alg kr diya aur ek nya router file bnaya hai hm app.get() nhi kr skte. Hme app.use() ka middleware bnana pdega
 6. Since we are going to have many versions of API so we defines routes as /api/v1/users/register.
-7. app.use("/api/v1/users",userRouter)  /users pr jayenge aur wha se userRouter p pass ho jayenge routes me, wha /register hit hoga to register kr denge user
+7. app.use("/api/v1/users",userRouter)  /users pr jayenge aur wha se userRouter p pass ho jayenge routes me, wha /register hit hoga to register kr denge user. 
+
+# 14 - User Regjister controller   
+
+1. Problem hai user ko register karna.
+Steps are --
+--> Get user details from frontend(postman)
+--> Validation - not empty
+--> Check if user exists
+--> Check for images , check for avatar
+--> upload on cloudinary,avatar
+--> create user object - create entry in db
+--> remove password and refresh token from response
+--> check for user creation
+--> return res
+2.  const existedUser=await User.findOne({          //Since User is created by mongoose it can directly contact with database
+        $or: [{ username },{ email }]          //operators is getting introduced here, we can invoke them using $  //If I want to check both email and usename then use operators
+    })   // this functions is telling that find me one user of the given username and email firstly found result will be returned
+
+3. We know that we have all data in req.body but since we have defined a middleware in routes, middleware added some files into it and give the access of req.files. 
+4.let avatarLocalPath;
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
+        avatarLocalPath = req.files.avatar[0].path    //avatar[0] coz first property have access of path in multer coz we have told multer that take the destination and return us the original Filename
+    
+5. Since uploading on cloudinary will take time we have to write await from our time inspite of being asyncHandler in our function we used async in our arguments for these type of operations only. We have to explicitely write this await async. 
+6. User is created by mongoose means it can directly talk to db so it will create an entry in db by create method
+7. //7.remove password and refresh tokens
+    //MongoDb implicitely define an id(_id field) along with ur data entries
+    const createdUser= await User.findById(user._id).select(    //Find user through id if found user is successfully created otherwise not
+        "-password -refreshToken"           //we can remove password and refresh token with objects but here we can do it easily with chaining
+    )       //weird syntax
+8. Send response thru APIresponse utils
+
+# 15 - Access Refresh Tokens, Middlewares and cookies in Backend
+
+1. Acces Token is generally short lived where as refresh tokens are long lived.
+2. Access token is used for authentication , if ur login session expires then again u have to write details and login , so here comes refresh tokens.
+3. Refresh tokens is stored in database as well as given to users. So user dont have to write password every time, just hit an endpoint and ur user refresh token and database refresh tokens is compared and if it is same then login and new access token will be given to user.
+4. findOne in mongoDb returns the data whichever it will find first
+5. we are not writing user 'u' in capital because we create it as capital when it is mongoDb object but it is created by us not by mongoDb.
+6. //Access and refresh token creation, this is so common so we gonna create a method for this 
+const generateAccessAndRefreshTokens= async(userId) =>{
+    try{
+        const user= await User.findById(userId)
+        const accessToken=await  user.generateAccessToken()
+        const refreshToken=await user.generateRefreshToken()
+        //access token we will give to user but we need to save refresh tokens to database
+        user.refreshToken= refreshToken
+        await user.save({validateBeforeSave: false})      //mongoose will kick in too many methods for save thats why we need to tell validateBeforeSave as false
+
+        return {accessToken , refreshToken}
+    }catch(error){
+        throw new ApiError(500,"Something went wrong while generating access and refresh tokens")
+    }
+}
+7. I created a user but user refreshToken is empty coz I created user first then called the function for user so I have to again configure the user with refreshToken. Now I can again call the database query or can update the user, if database query is a expensive operation then prefer updating the user
+8. By default cookies can be modified by anyone in frontend but if you true the httpOnly and secure field then it can only be modifiable by server 
+    const options = {
+        httpOnly: true,
+        secure: true
+	}
+9. For logout delete cookies and remove access and refresh tokens of the current login.
+10. We can design our custom middleware i.e. auth middleware it will verify whether user exists or not.
+11. I will verify user access token and add a new field req.user.
+12. this removes the field from the document, I dont want refreshtokens coz user is logout. 
+13. For doing logout we need to first authorise we need to see that user is logged in, after checking user is loggedin , we will get the access of requser, try to logout by unset the refresh token and giving a new refreshToken to the user
+
+# 16 - Access and Refresh Tokens in Backend
+
+1. accessToken and refreshToken is designed as user dont have to give email and password every time ,
+   accessToken is shortlived, refreshToken will be stored in database 
+   if user is timed out then hit a endpoint and get your accessToken refreshed and get a new refresh token, 
+   now this refreshed token is matched with the refreshToken in database
+   if same then start the session again 
+
+
+# 17 
+
+1. Will write the changeCurrentPassword controller.
+2. If user can change password means user is loggedin , means we have used an middleware , means we have access of req.user.
+3. Before saving pre middleware will run validating the password and required fields but I dont want pre to check all fields so I will use {validateBeforeSave: false}
+4. Get current user
+5. updateAccountDetails
+   const user=await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullname,
+                email,
+            }
+        },
+        {new:true}
+    ).select("-password")
+    Find user and use operator to set fullname ,email and return the new values and if you dont want to select certain field then select that.
+6. Whenever you are doing something on files u need to do it thru multer middleware and then upload it in cloudinary.
+7. updateAvatar and updateCoverImage we will use middleware multer and update , both codes are same.
